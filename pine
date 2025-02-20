@@ -1,0 +1,64 @@
+//@version=6
+indicator('Fibonacci Pivots', overlay = true)
+
+// Essential inputs
+showLabels = input.bool(true, 'Show Labels')
+showPrices = input.bool(true, 'Show Prices')
+linewidth = input.int(1, 'Line Width', minval = 1)
+pivotLookback = input.int(250, 'Number of Pivots Back', minval = 1)
+
+// Fibonacci levels colors
+f_color = #FB8C00 // Default color
+p_show = input.bool(true, 'P', inline = 'P')
+s1_show = input.bool(true, 'S1', inline = 'S1')
+r1_show = input.bool(true, 'R1', inline = 'R1')
+s2_show = input.bool(true, 'S2', inline = 'S2')
+r2_show = input.bool(true, 'R2', inline = 'R2')
+s3_show = input.bool(true, 'S3', inline = 'S3')
+r3_show = input.bool(true, 'R3', inline = 'R3')
+
+// Data structure for pivot graphics
+type PivotGraphic
+	line pivotLine
+	label pivotLabel
+
+var drawnGraphics = matrix.new<PivotGraphic>()
+
+// Calculate Fibonacci pivot points
+getFibPivots(high, low, close) =>
+    p = (high + low + close) / 3
+    r1 = p + (high - low) * 0.382
+    s1 = p - (high - low) * 0.382
+    r2 = p + (high - low) * 0.618
+    s2 = p - (high - low) * 0.618
+    r3 = p + (high - low) * 1.000
+    s3 = p - (high - low) * 1.000
+    [p, r1, s1, r2, s2, r3, s3]
+
+// Get pivot levels on timeframe change
+[p, r1, s1, r2, s2, r3, s3] = request.security(syminfo.tickerid, 'D', getFibPivots(high, low, close))
+
+// Draw pivots
+drawPivots(startTime) =>
+    if not na(p)
+        endTime = startTime + timeframe.in_seconds('D') * 1000
+
+        // Draw levels if enabled
+        if p_show
+            line.new(startTime, p, endTime, p, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if r1_show
+            line.new(startTime, r1, endTime, r1, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if s1_show
+            line.new(startTime, s1, endTime, s1, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if r2_show
+            line.new(startTime, r2, endTime, r2, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if s2_show
+            line.new(startTime, s2, endTime, s2, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if r3_show
+            line.new(startTime, r3, endTime, r3, color = f_color, width = linewidth,xloc = xloc.bar_time)
+        if s3_show
+            line.new(startTime, s3, endTime, s3, color = f_color, width = linewidth,xloc = xloc.bar_time)
+
+// Draw on new day
+if timeframe.change('D')
+    drawPivots(time)
